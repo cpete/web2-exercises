@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Word Search</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 480px;
+        margin: 4rem auto;
+        padding: 0 1rem;
+        color: #1a1a1a;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 1rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      ul {
+        list-style: none;
+        margin: 0.5rem 0 0;
+        padding: 0;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      li {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+      }
+      li:last-child {
+        border-bottom: none;
+      }
+      .empty {
+        color: #888;
+        font-style: italic;
+      }
+      .spinner {
+        display: none;
+        width: 1rem;
+        height: 1rem;
+        margin: 0.75rem auto 0;
+        border: 2px solid #ccc;
+        border-top-color: #1a1a1a;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+      .spinner.visible {
+        display: block;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Word search</h1>
+    <input type="search" id="query" placeholder="Start typing..." autocomplete="off" />
+    <div id="spinner" class="spinner" aria-hidden="true"></div>
+    <ul id="results"></ul>
+
+    <script>
+      const input = document.getElementById("query");
+      const results = document.getElementById("results");
+      const spinner = document.getElementById("spinner");
+
+      // Render the search results in a list.
+      function render(words) {
+        results.innerHTML = "";
+        if (words.length === 0) {
+          const li = document.createElement("li");
+          li.className = "empty";
+          li.textContent = "No matches";
+          results.appendChild(li);
+          return;
+        }
+        for (const word of words) {
+          const li = document.createElement("li");
+          li.textContent = word;
+          results.appendChild(li);
+        }
+      }
+
+      // The base URL of the API server.
+      const API_BASE = `${location.protocol}//${location.hostname}:3000`;
+
+      let requestId = 0;
+
+      // Perform a search query and render the results.
+      async function search(query) {
+        const currentRequest = ++requestId;
+        spinner.classList.add("visible");
+        try {
+          const response = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`);
+          if (currentRequest !== requestId) {
+            return;
+          }
+          if (!response.ok) {
+            results.innerHTML = "";
+            return;
+          }
+          render(await response.json());
+        } finally {
+          if (currentRequest === requestId) {
+            spinner.classList.remove("visible");
+          }
+        }
+      }
+
+      let timer;
+      input.addEventListener("input", () => {
+        clearTimeout(timer);
+        const query = input.value.trim();
+        if (query.length < 3) {
+          requestId++;
+          spinner.classList.remove("visible");
+          results.innerHTML = "";
+          return;
+        }
+        // Debounce the search query by 300ms to avoid making too many requests.
+        timer = setTimeout(() => search(query), 300);
+      });
+    </script>
+  </body>
+</html>
