@@ -11,4 +11,11 @@ export default tseslint.config(
       sourceType: "module",
     },
   },
+  {
+    // Exercise stubs intentionally leave parameters unused until implemented.
+    files: ["src/**/exercise/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
 );
