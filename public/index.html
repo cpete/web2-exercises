@@ -68,7 +68,21 @@
     <div id="spinner" class="spinner" aria-hidden="true"></div>
     <ul id="results"></ul>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs/7.8.1/rxjs.umd.min.js"></script>
     <script>
+      const { fromEvent, from, of, merge, EMPTY } = rxjs;
+      const {
+        map,
+        filter,
+        debounceTime,
+        distinctUntilChanged,
+        switchMap,
+        mergeMap,
+        tap,
+        catchError,
+        finalize,
+      } = rxjs;
+
       const input = document.getElementById("query");
       const results = document.getElementById("results");
       const spinner = document.getElementById("spinner");
@@ -93,42 +107,42 @@
       // The base URL of the API server.
       const API_BASE = `${location.protocol}//${location.hostname}:3000`;
 
-      let requestId = 0;
-
-      // Perform a search query and render the results.
-      async function search(query) {
-        const currentRequest = ++requestId;
+      // Perform a search query and return an observable of the results.
+      function search(query) {
         spinner.classList.add("visible");
-        try {
-          const response = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`);
-          if (currentRequest !== requestId) {
-            return;
-          }
-          if (!response.ok) {
-            results.innerHTML = "";
-            return;
-          }
-          render(await response.json());
-        } finally {
-          if (currentRequest === requestId) {
-            spinner.classList.remove("visible");
-          }
-        }
+        return from(fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`)).pipe(
+          // mergeMap just flattens the response.json() promise; there's only
+          // ever one outer emission here, so no cancellation semantics apply.
+          mergeMap((response) => (response.ok ? response.json() : of([]))),
+          catchError(() => of([])),
+          finalize(() => spinner.classList.remove("visible")),
+        );
       }
 
-      let timer;
-      input.addEventListener("input", () => {
-        clearTimeout(timer);
-        const query = input.value.trim();
-        if (query.length < 3) {
-          requestId++;
-          spinner.classList.remove("visible");
-          results.innerHTML = "";
-          return;
-        }
-        // Debounce the search query by 300ms to avoid making too many requests.
-        timer = setTimeout(() => search(query), 300);
-      });
+      const query$ = fromEvent(input, "input").pipe(map(() => input.value.trim()));
+
+      merge(
+        // Short queries clear the results immediately, with no debounce.
+        query$.pipe(filter((query) => query.length < 3)),
+        // Debounce longer queries by 300ms to avoid making too many requests.
+        query$.pipe(
+          filter((query) => query.length >= 3),
+          debounceTime(300),
+          distinctUntilChanged(),
+        ),
+      )
+        .pipe(
+          tap((query) => {
+            if (query.length < 3) {
+              results.innerHTML = "";
+              spinner.classList.remove("visible");
+            }
+          }),
+          // switchMap ensures that going back to a short query cancels any
+          // in-flight search, so a stale response can't overwrite the clear.
+          switchMap((query) => (query.length >= 3 ? search(query) : EMPTY)),
+        )
+        .subscribe(render);
     </script>
   </body>
 </html>
