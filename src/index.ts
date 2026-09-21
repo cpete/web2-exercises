@@ -4,7 +4,9 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 
 import { Account } from "./account.js";
+import type { AccountEvent } from "./event.js";
 import { EventStore } from "./event-store.js";
+import { AccountBalanceProjection } from "./projection.js";
 
 export function greet(name: string): string {
   return `Hello, ${name}!`;
@@ -17,6 +19,15 @@ export function greet(name: string): string {
 // GET /account/:id - get the balance of an account
 export function createApp(): express.Express {
   const eventStore = new EventStore();
+  const balanceProjection = new AccountBalanceProjection();
+
+  // Persists an event and feeds it to the read model, keeping the projection up to date
+  // incrementally so queries never have to replay the event stream.
+  function record(accountId: string, event: AccountEvent): void {
+    eventStore.append(accountId, event);
+    balanceProjection.on(event);
+  }
+
   const app = express();
   app.use(express.json());
 
@@ -26,9 +37,8 @@ export function createApp(): express.Express {
 
     try {
       const event = account.handle({ accountId, type: "OpenAccount" });
-      account.apply(event);
-      eventStore.append(accountId, event);
-      res.status(201).json({ id: accountId, balance: account.getBalance() });
+      record(accountId, event);
+      res.status(201).json({ id: accountId, balance: balanceProjection.balanceOf(accountId) });
     } catch (error) {
       res.status(400).json({ error: (error as Error).message });
     }
@@ -43,12 +53,13 @@ export function createApp(): express.Express {
       return;
     }
 
+    // Reconstruct the account from its event history to validate the deposit command.
+    // This is the write side of the CQRS pattern, where we validate commands against the current state of the aggregate.
     const account = Account.fromEvents(id, events);
     try {
       const event = account.handle({ accountId: id, type: "Deposit", amount: req.body.amount });
-      account.apply(event);
-      eventStore.append(id, event);
-      res.status(200).json({ id, balance: account.getBalance() });
+      record(id, event);
+      res.status(200).json({ id, balance: balanceProjection.balanceOf(id) });
     } catch (error) {
       res.status(400).json({ error: (error as Error).message });
     }
@@ -63,12 +74,13 @@ export function createApp(): express.Express {
       return;
     }
 
+    // Reconstruct the account from its event history to validate the withdrawal command.
+    // This is the write side of the CQRS pattern, where we validate commands against the current state of the aggregate.
     const account = Account.fromEvents(id, events);
     try {
       const event = account.handle({ accountId: id, type: "Withdraw", amount: req.body.amount });
-      account.apply(event);
-      eventStore.append(id, event);
-      res.status(200).json({ id, balance: account.getBalance() });
+      record(id, event);
+      res.status(200).json({ id, balance: balanceProjection.balanceOf(id) });
     } catch (error) {
       res.status(400).json({ error: (error as Error).message });
     }
@@ -76,15 +88,14 @@ export function createApp(): express.Express {
 
   app.get("/account/:id", (req, res) => {
     const { id } = req.params;
-    const events = eventStore.load(id);
-    
-    if (events.length === 0) {
+
+    if (eventStore.load(id).length === 0) {
       res.status(404).json({ error: "Account not found" });
       return;
     }
 
-    const account = Account.fromEvents(id, events);
-    res.status(200).json({ id, balance: account.getBalance() });
+    // Return the balance from the projection, which is kept up to date with events.
+    res.status(200).json({ id, balance: balanceProjection.balanceOf(id) });
   });
 
   return app;
