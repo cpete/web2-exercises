@@ -1,7 +1,7 @@
-// CampusNotes – Schritt 2: Service Worker mit App-Shell-Precaching
+// CampusNotes – Schritt 3: Caching-Strategien
 'use strict';
 
-const APP_VERSION = '02-service-worker';
+const APP_VERSION = '03-caching';
 const STORAGE_KEY = 'campusnotes.notes';
 
 const form = document.getElementById('note-form');
