@@ -1,7 +1,7 @@
-// CampusNotes – Schritt 0: Starter (noch keine PWA-Funktionen)
+// CampusNotes – Schritt 1: Web App Manifest
 'use strict';
 
-const APP_VERSION = '00-starter';
+const APP_VERSION = '01-manifest';
 const STORAGE_KEY = 'campusnotes.notes';
 
 const form = document.getElementById('note-form');
