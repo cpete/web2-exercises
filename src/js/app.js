@@ -1,7 +1,7 @@
-// CampusNotes – Schritt 1: Web App Manifest
+// CampusNotes – Schritt 2: Service Worker mit App-Shell-Precaching
 'use strict';
 
-const APP_VERSION = '01-manifest';
+const APP_VERSION = '02-service-worker';
 const STORAGE_KEY = 'campusnotes.notes';
 
 const form = document.getElementById('note-form');
@@ -102,7 +102,16 @@ function updateStatus() {
 window.addEventListener('online', updateStatus);
 window.addEventListener('offline', updateStatus);
 
-// TODO Übung 2: Service Worker registrieren
+// ---------- Service Worker ----------
+
+if ('serviceWorker' in navigator) {
+  // Erst nach dem Laden registrieren, damit das Precaching nicht mit dem ersten Seitenaufbau konkurriert
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => console.log('[App] Service Worker registriert, Scope:', registration.scope))
+      .catch(err => console.error('[App] Registrierung fehlgeschlagen:', err));
+  });
+}
 
 updateStatus();
 renderNotes();
