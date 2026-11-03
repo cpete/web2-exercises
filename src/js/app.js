@@ -1,4 +1,4 @@
-// CampusNotes – Schritt 3: Caching-Strategien
+// CampusNotes – Schritt 3: Caching-Strategien und Update-Hinweis
 'use strict';
 
 const APP_VERSION = '03-caching';
@@ -102,14 +102,49 @@ function updateStatus() {
 window.addEventListener('online', updateStatus);
 window.addEventListener('offline', updateStatus);
 
-// ---------- Service Worker ----------
+// ---------- Service Worker und Update-Hinweis ----------
+
+function showUpdateBanner(worker) {
+  const banner = document.getElementById('update-banner');
+  banner.hidden = false;
+  document.getElementById('update-button').onclick = () => {
+    // Der wartende Service Worker ruft daraufhin skipWaiting() auf (siehe sw.js)
+    worker.postMessage({ type: 'SKIP_WAITING' });
+  };
+}
 
 if ('serviceWorker' in navigator) {
-  // Erst nach dem Laden registrieren, damit das Precaching nicht mit dem ersten Seitenaufbau konkurriert
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => console.log('[App] Service Worker registriert, Scope:', registration.scope))
-      .catch(err => console.error('[App] Registrierung fehlgeschlagen:', err));
+  // Gab es beim Laden schon einen Controller? Nur dann ist ein Controller-Wechsel ein Update.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloading = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;
+    reloading = true;
+    window.location.reload();
+  });
+
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('[App] Service Worker registriert, Scope:', registration.scope);
+
+      // Fall 1: Beim Laden wartet bereits eine neue Version
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        showUpdateBanner(registration.waiting);
+      }
+      // Fall 2: Während die Seite offen ist, wird eine neue Version gefunden
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner(newWorker);
+          }
+        });
+      });
+    } catch (err) {
+      console.error('[App] Registrierung fehlgeschlagen:', err);
+    }
   });
 }
 

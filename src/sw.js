@@ -1,16 +1,18 @@
-// CampusNotes Service Worker – Schritt 3: Caching-Strategien
+// CampusNotes Service Worker – Schritt 3: Caching-Strategien, Versionierung, Updates
 //
 // Routing im fetch-Handler:
 //   Navigation (HTML)      → Network First, Fallback: Cache, dann offline.html
 //   /api/…  (Mensaplan)    → Stale-While-Revalidate
 //   statische Assets       → Cache First
 //
-// Achtung: Die Cache-Namen sind noch fest. Versionierung, Aufräumen alter Caches
-// und ein Update-Hinweis in der App folgen im nächsten Schritt.
+// Neue Version ausliefern: VERSION erhöhen. Der Browser erkennt die geänderte sw.js,
+// installiert sie und lässt sie warten, bis in der App "Jetzt aktualisieren" geklickt wird.
 
-const SHELL_CACHE = 'campusnotes-shell-v1'; // Name aus Schritt 2, damit kein verwaister Cache entsteht
-const RUNTIME_CACHE = 'campusnotes-runtime';
-const API_CACHE = 'campusnotes-api';
+const VERSION = 'v2';
+const SHELL_CACHE = `campusnotes-shell-${VERSION}`;
+const RUNTIME_CACHE = `campusnotes-runtime-${VERSION}`;
+const API_CACHE = 'campusnotes-api'; // bewusst unversioniert: Daten sollen Updates überleben
+const CURRENT_CACHES = [SHELL_CACHE, RUNTIME_CACHE, API_CACHE];
 
 const OFFLINE_URL = '/offline.html';
 const APP_SHELL = [
@@ -26,12 +28,29 @@ const APP_SHELL = [
 // ---------- Lifecycle ----------
 
 self.addEventListener('install', event => {
-  console.log('[SW] install');
+  console.log(`[SW ${VERSION}] install`);
   event.waitUntil(caches.open(SHELL_CACHE).then(cache => cache.addAll(APP_SHELL)));
+  // Kein skipWaiting() hier: Die neue Version wartet, bis die App sie per Nachricht aktiviert.
 });
 
-self.addEventListener('activate', () => {
-  console.log('[SW] activate');
+self.addEventListener('activate', event => {
+  console.log(`[SW ${VERSION}] activate`);
+  event.waitUntil((async () => {
+    // Alle Caches löschen, die nicht zur aktuellen Version gehören
+    const keys = await caches.keys();
+    await Promise.all(
+      keys.filter(key => !CURRENT_CACHES.includes(key)).map(key => {
+        console.log(`[SW ${VERSION}] lösche alten Cache ${key}`);
+        return caches.delete(key);
+      })
+    );
+    // Bereits offene Seiten sofort kontrollieren (sonst erst nach dem nächsten Laden)
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // ---------- Routing ----------
