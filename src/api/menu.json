@@ -1,0 +1,9 @@
+{
+  "updated": "2026-11-10T10:30:00+01:00",
+  "dishes": [
+    { "name": "Linsen-Dal mit Basmatireis", "category": "vegan", "price": 3.2 },
+    { "name": "Spätzle-Pfanne mit Bergkäse", "category": "vegetarisch", "price": 3.6 },
+    { "name": "Hähnchengeschnetzeltes mit Reis", "category": "Fleisch", "price": 4.1 },
+    { "name": "Ofengemüse mit Kräuterdip", "category": "vegetarisch", "price": 2.9 }
+  ]
+}

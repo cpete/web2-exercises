@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CampusNotes</title>
+  <meta name="description" content="Notizen und Mensaplan für den Campus">
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- TODO Übung 1: Web App Manifest, theme-color und Apple-Touch-Icon einbinden -->
+</head>
+<body>
+  <header class="app-header">
+    <h1>CampusNotes</h1>
+    <span id="status" class="status" aria-live="polite"></span>
+  </header>
+
+  <main class="app-main">
+    <section class="card">
+      <h2>Notizen</h2>
+      <form id="note-form" class="note-form">
+        <label for="note-input" class="visually-hidden">Neue Notiz</label>
+        <input id="note-input" type="text" placeholder="Neue Notiz …" required maxlength="200" autocomplete="off">
+        <button type="submit">Hinzufügen</button>
+      </form>
+      <ul id="note-list" class="note-list"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Mensa heute <small id="menu-meta" class="meta"></small></h2>
+      <ul id="menu-list" class="menu-list"><li>Lade Speiseplan …</li></ul>
+    </section>
+  </main>
+
+  <footer class="app-footer">CampusNotes · Stand <span id="app-version"></span></footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
