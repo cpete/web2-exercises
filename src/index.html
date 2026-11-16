@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Live-Coding: user-greeting</title>
+  <script type="module" src="./user-greeting.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; }
+    user-greeting { display: block; font-size: 1.5rem; margin: .5rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Live-Coding: &lt;user-greeting&gt;</h1>
+
+  <user-greeting name="Ada"></user-greeting>
+  <user-greeting></user-greeting>
+
+  <p>
+    <label>Name: <input id="name" value="Grace"></label>
+    <button id="set">Attribut setzen</button>
+  </p>
+
+  <script type="module">
+    const greeting = document.querySelector('user-greeting');
+    document.querySelector('#set').addEventListener('click', () => {
+      greeting.setAttribute('name', document.querySelector('#name').value);
+    });
+  </script>
+</body>
+</html>
