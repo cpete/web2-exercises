@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Übung 1 – Lösung</title>
+  <script type="module" src="../../livecoding/user-greeting.js"></script>
+  <script type="module" src="./counter-button.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; }
+    .box { border: 2px dashed #999; padding: 1rem; margin: 1rem 0; min-height: 3rem; }
+    /* Bonus: Zustand vor der Definition stylen */
+    counter-button:not(:defined) { display: inline-block; width: 6rem; height: 1.5rem; background: #eee; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Übung 1</h1>
+
+  <h2>1. user-greeting</h2>
+  <user-greeting name="Ada"></user-greeting>
+
+  <h2>2. counter-button</h2>
+  <counter-button start="5"></counter-button>
+
+  <h2>3. Lifecycle beobachten (Konsole öffnen!)</h2>
+  <p>
+    <button id="insert">Einfügen</button>
+    <button id="move">Verschieben</button>
+    <button id="remove">Entfernen</button>
+    <button id="attr">Attribut start = 10</button>
+  </p>
+  <div class="box" id="box-a">Box A</div>
+  <div class="box" id="box-b">Box B</div>
+
+  <script type="module">
+    const boxA = document.querySelector('#box-a');
+    const boxB = document.querySelector('#box-b');
+    let el = null;
+
+    document.querySelector('#insert').onclick = () => {
+      el = document.createElement('counter-button');
+      el.setAttribute('start', '1');
+      boxA.append(el);
+    };
+    document.querySelector('#move').onclick = () => {
+      if (!el) return;
+      (el.parentElement === boxA ? boxB : boxA).append(el);
+    };
+    document.querySelector('#remove').onclick = () => { el?.remove(); el = null; };
+    document.querySelector('#attr').onclick = () => el?.setAttribute('start', '10');
+  </script>
+</body>
+</html>
