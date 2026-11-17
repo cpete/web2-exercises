@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Übung: product-card</title>
+  <script type="module" src="./product-card.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 50rem; margin: 2rem auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; }
+
+    /* Styles der Komponente – liegen (noch) global im Light DOM */
+    .card { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; }
+    .card .old { text-decoration: line-through; color: #777; }
+    .card .current.sale { color: crimson; font-weight: bold; }
+
+    /* „Fremdes“ globales CSS der Seite – was passiert mit unserer Karte? */
+    h2 { color: hotpink; }
+  </style>
+</head>
+<body>
+  <h1>Übung 2: &lt;product-card&gt;</h1>
+
+  <template id="product-card-template">
+    <article class="card">
+      <h2 class="title"></h2>
+      <p class="price">
+        <span class="old"></span>
+        <span class="current"></span>
+      </p>
+    </article>
+  </template>
+
+  <div class="grid">
+    <product-card title="Mechanische Tastatur" price="89.90" sale></product-card>
+    <product-card title="USB-C-Hub" price="39"></product-card>
+    <product-card id="demo" title="Monitorarm" price="129.00"></product-card>
+  </div>
+
+  <p>
+    <button id="toggle">Sale umschalten (Monitorarm)</button>
+    <button id="cheaper">Preis −10 € (über Property)</button>
+  </p>
+
+  <script type="module">
+    const demo = document.querySelector('#demo');
+    document.querySelector('#toggle').onclick = () => { demo.sale = !demo.sale; };
+    document.querySelector('#cheaper').onclick = () => { demo.price = demo.price - 10; };
+  </script>
+</body>
+</html>
