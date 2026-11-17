@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Übung 3: product-card mit Shadow DOM</title>
+  <script type="module" src="./product-card.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 50rem; margin: 2rem auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; }
+
+    /* „Fremdes“ globales CSS – darf die Karte nicht mehr beeinflussen */
+    h2 { color: hotpink; }
+
+    /* Geslotteter Inhalt bleibt Light DOM → die Seite stylt ihn selbst */
+    product-card img { display: block; width: 100%; height: auto; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Übung: Kapselung mit Shadow DOM und Slots</h1>
+
+  <div class="grid">
+    <product-card price="89.90" sale>
+      <img slot="image" src="https://picsum.photos/seed/keyboard/400/240" alt="Tastatur">
+      <span slot="title">Mechanische Tastatur</span>
+      <p>Hot-Swap-Switches, <strong>RGB</strong>, deutsches Layout.</p>
+    </product-card>
+
+    <product-card price="39">
+      <img slot="image" src="https://picsum.photos/seed/hub/400/240" alt="USB-Hub">
+      <span slot="title">USB-C-Hub</span>
+      <p>7 Anschlüsse, 100 W Power Delivery.</p>
+    </product-card>
+
+    <product-card price="129">
+      <p>Diese Karte hat keinen Titel-Slot → Fallback-Inhalt.</p>
+    </product-card>
+  </div>
+</body>
+</html>
